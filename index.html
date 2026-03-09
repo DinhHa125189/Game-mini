@@ -2,57 +2,104 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Cờ Caro AI Ultimate</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Caro AI Mobile</title>
     <style>
-        :root { --primary: #2c3e50; --secondary: #34495e; --accent: #e74c3c; --success: #27ae60; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; }
+        :root { 
+            --primary: #2c3e50; 
+            --accent: #e74c3c; 
+            --success: #27ae60; 
+            --cell-size: 6.5vw; /* Kích thước ô dựa trên chiều rộng màn hình */
+            --max-cell-size: 35px; 
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: #f8f9fa; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center;
+            touch-action: manipulation; /* Tối ưu hóa phản hồi chạm */
+        }
+
+        /* Màn hình setup */
+        #setup-screen { 
+            width: 90%; max-width: 400px; 
+            background: white; padding: 20px; 
+            border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+            margin-top: 20vh; text-align: center; 
+        }
+        input, select { 
+            width: 80%; padding: 12px; margin: 10px 0; 
+            border: 2px solid #eee; border-radius: 10px; font-size: 16px; 
+        }
+
+        /* Màn hình Game */
+        #game-screen { display: none; width: 100%; text-align: center; }
         
-        /* Setup Screen */
-        #setup-screen { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-top: 50px; text-align: center; }
-        input, select { padding: 10px; margin: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; }
-        
-        /* Game Screen */
-        #game-screen { display: none; text-align: center; width: 100%; }
+        .info-bar { 
+            background: var(--primary); color: white; 
+            padding: 15px 5px; font-size: 14px; font-weight: bold;
+            position: sticky; top: 0; z-index: 10;
+        }
+
         #board { 
-            display: grid; gap: 1px; background: #bdc3c7; border: 3px solid #7f8c8d; 
-            margin: 20px auto; width: fit-content; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: grid; 
+            grid-template-columns: repeat(15, 1fr); 
+            gap: 1px; background: #bdc3c7; 
+            margin: 15px auto; 
+            width: 96vw; /* Gần như chiếm trọn bề ngang điện thoại */
+            max-width: 525px; /* Giới hạn trên máy tính */
+            border: 2px solid #7f8c8d;
+            touch-action: none; /* Ngăn cuộn trang khi đang chạm vào bàn cờ */
         }
+
         .cell { 
-            width: 32px; height: 32px; background: white; display: flex; 
-            align-items: center; justify-content: center; font-weight: bold; 
-            cursor: pointer; font-size: 20px; transition: 0.1s;
+            aspect-ratio: 1 / 1; /* Giữ ô luôn vuông */
+            background: white; display: flex; 
+            align-items: center; justify-content: center; 
+            font-weight: bold; font-size: calc(var(--cell-size) * 0.7); 
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent; /* Xóa màu highlight khi chạm trên iOS/Android */
         }
-        .cell:hover { background: #ecf0f1; }
+
+        /* Điều chỉnh font size cho máy tính */
+        @media (min-width: 600px) {
+            .cell { font-size: 22px; }
+        }
+
         .cell.x { color: var(--accent); }
         .cell.o { color: #2980b9; }
         .last-move { background: #fff9c4 !important; }
 
-        .info-bar { background: var(--primary); color: white; padding: 15px; width: 100%; box-sizing: border-box; }
-        button { padding: 10px 25px; background: var(--success); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        button:hover { opacity: 0.9; transform: translateY(-2px); }
+        #status { margin: 10px 0; font-size: 18px; color: var(--primary); font-weight: bold; }
+        
+        .btn { 
+            padding: 12px 30px; background: var(--success); 
+            color: white; border: none; border-radius: 50px; 
+            font-size: 16px; font-weight: bold; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+        }
     </style>
 </head>
 <body>
 
 <div id="setup-screen">
-    <h1>🎮 Cờ Caro AI</h1>
-    <input type="text" id="playerName" placeholder="Nhập tên của bạn..." maxlength="15"><br>
-    <label>Mức độ: </label>
+    <h2 style="margin-top:0">🎮 Caro Mobile AI</h2>
+    <input type="text" id="playerName" placeholder="Tên của bạn..." maxlength="12">
     <select id="difficulty">
-        <option value="easy">Dễ (Máy hơi ngáo)</option>
-        <option value="medium" selected>Trung bình (Cân não)</option>
-        <option value="hard">Khó (Bậc thầy phòng ngự)</option>
-    </select><br>
-    <button onclick="startGame()">Bắt đầu chơi</button>
+        <option value="easy">Mức: Dễ</option>
+        <option value="medium" selected>Mức: Trung bình</option>
+        <option value="hard">Mức: Khó</option>
+    </select>
+    <button class="btn" style="width: 100%; margin-top: 15px;" onclick="startGame()">VÀO CHƠI NGAY</button>
 </div>
 
 <div id="game-screen">
-    <div class="info-bar">
-        <span id="displayNames">Người chơi vs Máy</span> | 
-        <span id="status">Lượt của bạn</span>
-    </div>
+    <div class="info-bar" id="displayNames">Caro AI</div>
+    <div id="status">Đang đợi...</div>
     <div id="board"></div>
-    <button onclick="location.reload()">Thoát / Chơi lại</button>
+    <button class="btn" style="background: #95a5a6;" onclick="location.reload()">LÀM MỚI / THOÁT</button>
 </div>
 
 <script>
@@ -72,18 +119,23 @@ function startGame() {
     
     document.getElementById("setup-screen").style.display = "none";
     document.getElementById("game-screen").style.display = "block";
-    document.getElementById("displayNames").textContent = `${playerName} (X) vs 🤖 Máy (O)`;
+    document.getElementById("displayNames").textContent = `⚔️ ${playerName} (X) vs 🤖 Máy (O)`;
+    document.getElementById("status").textContent = "Mời bạn đánh!";
     
     createBoard();
 }
 
 function createBoard() {
     const boardDiv = document.getElementById("board");
-    boardDiv.style.gridTemplateColumns = `repeat(${SIZE}, 32px)`;
+    boardDiv.innerHTML = "";
     for (let i = 0; i < SIZE * SIZE; i++) {
         const cell = document.createElement("div");
         cell.className = "cell";
-        cell.addEventListener("click", () => playerMove(i));
+        // Sử dụng cả click và touchend để đảm bảo nhạy trên mọi thiết bị
+        cell.addEventListener("click", (e) => {
+            e.preventDefault();
+            playerMove(i);
+        });
         boardDiv.appendChild(cell);
     }
 }
@@ -93,12 +145,12 @@ function playerMove(i) {
     
     makeMove(i, "X");
     if (checkWin(i, "X")) {
-        endGame(`🎉 Chúc mừng ${playerName} đã thắng!`);
+        endGame(`🎉 ${playerName} thắng!`);
         return;
     }
 
-    document.getElementById("status").textContent = "🤖 Máy đang tính...";
-    setTimeout(aiMove, 300);
+    document.getElementById("status").textContent = "🤖 Máy đang nghĩ...";
+    setTimeout(aiMove, 200);
 }
 
 function makeMove(i, player) {
@@ -115,7 +167,6 @@ function aiMove() {
     if (gameOver) return;
     
     let move;
-    // Mức dễ: 30% đánh ngẫu nhiên vào ô trống bất kỳ xung quanh
     if (difficulty === "easy" && Math.random() < 0.3) {
         let candidates = getCandidates();
         move = candidates[Math.floor(Math.random() * candidates.length)];
@@ -125,9 +176,9 @@ function aiMove() {
 
     makeMove(move, "O");
     if (checkWin(move, "O")) {
-        endGame("🤖 Máy thắng rồi! Gà quá!");
+        endGame("🤖 Máy thắng rồi!");
     } else {
-        document.getElementById("status").textContent = `Lượt của ${playerName}`;
+        document.getElementById("status").textContent = "Đến lượt bạn";
     }
 }
 
@@ -135,18 +186,12 @@ function findBestMove() {
     let bestScore = -Infinity;
     let move = -1;
     let candidates = getCandidates();
-
-    // Hệ số phòng ngự thay đổi theo độ khó
-    let defenseWeight = 0.8; // Medium
-    if (difficulty === "easy") defenseWeight = 0.3;
-    if (difficulty === "hard") defenseWeight = 1.5;
+    let defenseWeight = difficulty === "easy" ? 0.3 : (difficulty === "hard" ? 1.5 : 0.8);
 
     for (let i of candidates) {
         let attackScore = evaluatePoint(i, "O");
         let defenseScore = evaluatePoint(i, "X");
-        
         let totalScore = attackScore + (defenseScore * defenseWeight);
-
         if (totalScore > bestScore) {
             bestScore = totalScore;
             move = i;
@@ -223,7 +268,7 @@ function checkWin(index, player) {
 function endGame(msg) {
     document.getElementById("status").textContent = msg;
     gameOver = true;
-    alert(msg);
+    setTimeout(() => alert(msg), 100);
 }
 </script>
 </body>
